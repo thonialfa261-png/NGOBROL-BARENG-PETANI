@@ -1,0 +1,11 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class channel extends Model
+{
+    protected $guarded = [];
+    protected $fillable = ['nama_channel'];
+}
