@@ -6,5 +6,14 @@ use Illuminate\Database\Eloquent\Model;
 
 class message extends Model
 {
-    
+    protected $fillable = [
+        'user_id', 
+        'channel_id', 
+        'pesan',
+        'image_path'
+    ];
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 }

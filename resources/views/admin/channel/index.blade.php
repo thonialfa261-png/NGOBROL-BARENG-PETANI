@@ -14,6 +14,7 @@
             <tr>
                 <th class="px-6 py-4 font-semibold text-gray-700">No</th>
                 <th class="px-6 py-4 font-semibold text-gray-700">Nama Channel</th>
+                <th class="px-6 py-4 font-semibold text-gray-700">Kecamatan</th>
                 <th class="px-6 py-4 font-semibold text-gray-700">Aksi</th>
             </tr>
         </thead>
@@ -22,6 +23,7 @@
             <tr class="hover:bg-gray-50">
                 <td class="px-6 py-4">{{ $index + 1 }}</td>
                 <td class="px-6 py-4 font-medium">{{ $item->nama_channel }}</td>
+                <td class="px-6 py-4 font-medium">{{ $item->kecamatan->nama_kecamatan ?? 'Tidak ada kecamatan'}}</td>
                 <td class="px-6 py-4 flex items-center">
                 <a href="{{ route('admin.channel.edit', $item->id) }}" class="text-blue-600 hover:underline mr-3">Edit</a>
                 <form action="{{ route('admin.channel.destroy', $item->id) }}" method="POST" onsubmit="return confirm('Yakin ingin menghapus kecamatan ini?')">

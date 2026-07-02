@@ -16,6 +16,7 @@ return new class extends Migration
             $table->string('nama_channel');
             $table->string('slug')->nullable();
             $table->string('description')->nullable();
+            $table->foreignId('kecamatan_id')->nullable()->constrained('kecamatans')->onDelete('cascade');
             $table->timestamps();
         });
     }

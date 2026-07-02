@@ -1,37 +1,79 @@
 <?php
 
-use App\Http\Controllers\Admin\KecamatanController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
-use App\Http\Controllers\Admin\ChannelController;
+use Illuminate\Http\Request;
+
+use App\Http\Controllers\Admin\AdminController;
 use App\Http\Controllers\Admin\DashboardController;
+use App\Http\Controllers\Admin\KecamatanController;
+use App\Http\Controllers\Admin\ChannelController;
 use App\Http\Controllers\Admin\UserController;
-use SebastianBergmann\CodeCoverage\Report\Html\Dashboard;
+
+use App\Models\Message;
+use App\Models\channel; 
 
 Route::get('/', function () {
-    return view('welcome');
+    $channels = channel::with('kecamatan')->get();
+    return view('welcome', compact('channels'));
 });
-    // Router Admin Bagian Dasboard //
-Route::get('/admin', [DashboardController::class, 'index'])->name('admin.dashboard');
-    // Router Admin Bagian Kecamatan //
-Route::get('/admin/kecamatan', [KecamatanController::class, 'index'])->name('admin.kecamatan.index');
-Route::get('/admin/kecamatan/create', [KecamatanController::class, 'create'])->name('admin.kecamatan.create');
-Route::post('/admin/kecamatan', [KecamatanController::class, 'store'])->name('admin.kecamatan.store');
 
-Route::get('/admin/kecamatan/{id}/edit', [KecamatanController::class, 'edit'])->name('admin.kecamatan.edit');
-Route::put('/admin/kecamatan/{id}', [KecamatanController::class, 'update'])->name('admin.kecamatan.update');
-Route::delete('/admin/kecamatan/{id}', [KecamatanController::class, 'destroy'])->name('admin.kecamatan.destroy');
+Route::get('/dashboard', function () {
+    $channels = channel::all();
 
-   // Router Admin Bagian Channel //
-Route::get('/admin/channel', [ChannelController::class, 'index'])->name('admin.channel.index');
-Route::get('/admin/channel/create', [ChannelController::class, 'create'])->name('admin.channel.create');
-Route::post('/admin/channel', [ChannelController::class, 'store'])->name('admin.channel.store');
+    $firstChannel = channel::first();
 
-Route::get('/admin/channel/{id}/edit', [ChannelController::class, 'edit'])->name('admin.channel.edit');
-Route::put('/admin/channel/{id}', [ChannelController::class, 'update'])->name('admin.channel.update');
-Route::delete('/admin/channel/{id}', [ChannelController::class, 'destroy'])->name('admin.channel.destroy');
+    if ($firstChannel) {
+        return redirect()->route('chat.room', $firstChannel->id);
+    }
+    return view('dashboard', compact('channels'));
+})->middleware(['auth', 'verified'])->name('dashboard');
+Route::get('/dashboard/chat/{id}', function($id) {
+    $channels = channel::all();
+    $activeChannel = channel::with('kecamatan')->findOrFail($id);
+    $messages = Message::where('channel_id', $id)->with('user')->get(); 
+    return view('dashboard', compact('channels', 'activeChannel', 'messages'));
+})->middleware(['auth'])->name('chat.room');
 
-    // Router Admin bagian Data User //
-Route::get('/admin/user', [UserController::class, 'index'])->name('admin.user.index');
-Route::get('/admin/user/create', [UserController::class, 'create'])->name('admin.user.create');
-Route::post('/admin/user', [UserController::class, 'store'])->name('admin.user.store');
-Route::delete('/admin/user/{id}', [UserController::class, 'destroy'])->name('admin.user.destroy');
+Route::post('/dashboard/chat/{id}/send', function(Request $request, $id) {
+    $request->validate([
+        'pesan' => 'required|string|max:1000',
+        'image' => 'nullable|image|max:2048'
+    ]);
+
+    $imagePath = null;
+    if ($request->hasFile('image')) {
+        $imagePath = $request->file('image')->store('chat_images', 'public');
+    }
+
+    Message::create([
+        'user_id' => auth()->id(),
+        'channel_id' => $id,
+        'pesan' => $request->pesan,
+        'image_path' => $imagePath 
+    ]);
+
+    return redirect()->back();
+})->middleware(['auth'])->name('chat.send');
+
+Route::middleware('auth')->group(function () {
+    Route::get('/chat/join/{id}', function ($id) {
+        return redirect('/dashboard')->with('status', 'Selamat bergabung di saluran obrolan!');
+    })->name('chat.join');
+
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
+
+Route::middleware(['auth', 'admin'])->prefix('admin')->name('admin.')->group(function () {
+    Route::get('/', [AdminController::class, 'index'])->name('dashboard'); 
+    
+    Route::get('/stats', [DashboardController::class, 'index'])->name('stats'); 
+    
+    Route::resource('kecamatan', KecamatanController::class);
+    Route::resource('channel', ChannelController::class);
+    Route::resource('user', UserController::class);
+});
+
+require __DIR__.'/auth.php';

@@ -15,6 +15,18 @@
             <input type="text" name="nama_channel" value="{{ $item->nama_channel }}" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
         </div>
 
+        <div class="mb-4">
+    <label class="block text-gray-700 text-sm font-bold mb-2">Pilih Kecamatan</label>
+    <select name="kecamatan_id" class="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+        <option value="">-- Pilih Kecamatan --</option>
+        @foreach($kecamatans as $kec)
+            <option value="{{ $kec->id }}" {{ $item->kecamatan_id == $kec->id ? 'selected' : '' }}>
+                {{ $kec->nama_kecamatan }}
+            </option>
+        @endforeach
+    </select>
+</div>
+
         <div class="flex gap-2">
             <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">
                 Update Data
